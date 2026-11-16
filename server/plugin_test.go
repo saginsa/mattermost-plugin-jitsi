@@ -121,3 +121,35 @@ func TestStartMeeting(t *testing.T) {
 		require.Equal(t, "test-id", meetingID)
 	})
 }
+
+func TestGetUserConfigRingOnMeetingStart(t *testing.T) {
+	for _, ring := range []bool{true, false} {
+		p := Plugin{configuration: &configuration{JitsiRingOnMeetingStart: ring}}
+		apiMock := plugintest.API{}
+		p.SetAPI(&apiMock)
+
+		t.Run("without saved user settings", func(t *testing.T) {
+			apiMock.On("KVGet", "config_new-user").Return(nil, nil)
+			userConfig, err := p.getUserConfig("new-user")
+			require.NoError(t, err)
+			require.Equal(t, ring, userConfig.RingOnMeetingStart)
+		})
+
+		t.Run("with saved user settings, the stored computed value is ignored", func(t *testing.T) {
+			b, _ := json.Marshal(UserConfig{NamingScheme: "uuid", RingOnMeetingStart: !ring})
+			apiMock.On("KVGet", "config_saved-user").Return(b, nil)
+			userConfig, err := p.getUserConfig("saved-user")
+			require.NoError(t, err)
+			require.Equal(t, ring, userConfig.RingOnMeetingStart)
+			require.Equal(t, "uuid", userConfig.NamingScheme)
+		})
+
+		t.Run("the user turned the ring off", func(t *testing.T) {
+			b, _ := json.Marshal(UserConfig{NamingScheme: "uuid", DisableRing: true})
+			apiMock.On("KVGet", "config_quiet-user").Return(b, nil)
+			userConfig, err := p.getUserConfig("quiet-user")
+			require.NoError(t, err)
+			require.False(t, userConfig.RingOnMeetingStart)
+		})
+	}
+}

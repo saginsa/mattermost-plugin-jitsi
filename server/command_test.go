@@ -47,7 +47,8 @@ func TestCommandHelp(t *testing.T) {
     * |words|: Random English words in title case (e.g. PlayfulDragonsObserveCuriously)
     * |uuid|: UUID (universally unique identifier)
     * |mattermost|: Mattermost specific names. Combination of team name, channel name and random text in public and private channels; personal meeting name in direct and group messages channels.
-    * |ask|: The plugin asks you to select the name every time you start a meeting`, "|", "`")
+    * |ask|: The plugin asks you to select the name every time you start a meeting
+* |/jitsi settings ring [true/false]|: When true, a sound plays when someone else starts a meeting: a ringtone in direct and group messages, a short chime in channels. Desktop and web apps only.`, "|", "`")
 
 	apiMock.On("SendEphemeralPost", "test-user", &model.Post{
 		UserId:    "test-bot-id",
@@ -83,6 +84,18 @@ func TestCommandSettings(t *testing.T) {
 			newConfig: &UserConfig{Embedded: true, NamingScheme: "mattermost", ShowPrejoinPage: true},
 		},
 		{
+			name:      "turn the ring off",
+			command:   "/jitsi settings ring false",
+			output:    "Jitsi settings updated:\n\n* ring: `false`",
+			newConfig: &UserConfig{NamingScheme: "mattermost", ShowPrejoinPage: true, DisableRing: true},
+		},
+		{
+			name:      "set valid setting with invalid value (ring)",
+			command:   "/jitsi settings ring maybe",
+			output:    "Invalid `ring` value, use `true` or `false`.",
+			newConfig: nil,
+		},
+		{
 			name:      "set valid setting with invalid value (embedded)",
 			command:   "/jitsi settings embedded yes",
 			output:    "Invalid `embedded` value, use `true` or `false`.",
@@ -97,7 +110,7 @@ func TestCommandSettings(t *testing.T) {
 		{
 			name:      "set invalid setting",
 			command:   "/jitsi settings other true",
-			output:    "Invalid config field, use `embedded`, `show_prejoin_page` or `naming_scheme`.",
+			output:    "Invalid config field, use `embedded`, `show_prejoin_page`, `naming_scheme` or `ring`.",
 			newConfig: nil,
 		},
 		{
@@ -109,7 +122,7 @@ func TestCommandSettings(t *testing.T) {
 		{
 			name:      "get current user settings",
 			command:   "/jitsi settings see",
-			output:    "###### Jitsi Settings:\n* Embedded: `false`\n* Show Pre-join Page: `true`\n* Naming Scheme: `mattermost`",
+			output:    "###### Jitsi Settings:\n* Embedded: `false`\n* Show Pre-join Page: `true`\n* Naming Scheme: `mattermost`\n* Ring: `true`",
 			newConfig: nil,
 		},
 	}

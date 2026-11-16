@@ -30,6 +30,13 @@ type UserConfig struct {
 	NamingScheme    string `json:"naming_scheme"`
 	Embedded        bool   `json:"embedded"`
 	ShowPrejoinPage bool   `json:"show_prejoin_page"`
+
+	// DisableRing turns off the sound played when someone else starts a meeting.
+	DisableRing bool `json:"disable_ring,omitempty"`
+
+	// RingOnMeetingStart tells the webapp whether to play that sound: the system setting
+	// JitsiRingOnMeetingStart is on and the user has not disabled it. It is computed on read.
+	RingOnMeetingStart bool `json:"ring_on_meeting_start"`
 }
 
 type Plugin struct {
@@ -514,9 +521,10 @@ func (p *Plugin) getUserConfig(userID string) (*UserConfig, error) {
 
 	if data == nil {
 		return &UserConfig{
-			Embedded:        p.getConfiguration().JitsiEmbedded,
-			NamingScheme:    p.getConfiguration().JitsiNamingScheme,
-			ShowPrejoinPage: p.getConfiguration().JitsiPrejoinPage,
+			Embedded:           p.getConfiguration().JitsiEmbedded,
+			NamingScheme:       p.getConfiguration().JitsiNamingScheme,
+			ShowPrejoinPage:    p.getConfiguration().JitsiPrejoinPage,
+			RingOnMeetingStart: p.getConfiguration().JitsiRingOnMeetingStart,
 		}, nil
 	}
 
@@ -525,6 +533,7 @@ func (p *Plugin) getUserConfig(userID string) (*UserConfig, error) {
 	if err != nil {
 		return nil, err
 	}
+	userConfig.RingOnMeetingStart = p.getConfiguration().JitsiRingOnMeetingStart && !userConfig.DisableRing
 
 	return &userConfig, nil
 }

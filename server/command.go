@@ -23,6 +23,7 @@ const valueFalse = "false"
 const commandArgShowPrejoinPage = "show_prejoin_page"
 const commandArgEmbedded = "embedded"
 const commandArgNamingScheme = "naming_scheme"
+const commandArgRing = "ring"
 
 func startMeetingError(channelID string, detailedError string) (*model.CommandResponse, *model.AppError) {
 	return &model.CommandResponse{
@@ -103,6 +104,17 @@ func getAutocompleteData() *model.AutocompleteData {
 	}}
 	namingScheme.AddStaticListArgument("Choose where the Jitsi meeting should open", true, items)
 	settings.AddCommand(namingScheme)
+
+	ring := model.NewAutocompleteData(commandArgRing, "[value]", "Choose whether to play a sound when someone else starts a meeting")
+	items = []model.AutocompleteListItem{{
+		HelpText: "Play a sound when someone else starts a meeting",
+		Item:     valueTrue,
+	}, {
+		HelpText: "Do not play a sound when someone else starts a meeting",
+		Item:     valueFalse,
+	}}
+	ring.AddStaticListArgument("Choose whether to play a sound when someone else starts a meeting", true, items)
+	settings.AddCommand(ring)
 	jitsi.AddCommand(settings)
 
 	return jitsi
@@ -197,7 +209,8 @@ func (p *Plugin) executeHelpCommand(_ *plugin.Context, args *model.CommandArgs) 
     * |words|: Random English words in title case (e.g. PlayfulDragonsObserveCuriously)
     * |uuid|: UUID (universally unique identifier)
     * |mattermost|: Mattermost specific names. Combination of team name, channel name and random text in public and private channels; personal meeting name in direct and group messages channels.
-    * |ask|: The plugin asks you to select the name every time you start a meeting`,
+    * |ask|: The plugin asks you to select the name every time you start a meeting
+* |/jitsi settings ring [true/false]|: When true, a sound plays when someone else starts a meeting: a ringtone in direct and group messages, a short chime in channels. Desktop and web apps only.`,
 		},
 	})
 
@@ -247,12 +260,14 @@ func (p *Plugin) executeSettingsCommand(_ *plugin.Context, args *model.CommandAr
 				Other: `###### Jitsi Settings:
 * Embedded: |{{.Embedded}}|
 * Show Pre-join Page: |{{.ShowPrejoinPage}}|
-* Naming Scheme: |{{.NamingScheme}}|`,
+* Naming Scheme: |{{.NamingScheme}}|
+* Ring: |{{.Ring}}|`,
 			},
 			TemplateData: map[string]string{
 				"Embedded":        fmt.Sprintf("%v", userConfig.Embedded),
 				"ShowPrejoinPage": fmt.Sprintf("%v", userConfig.ShowPrejoinPage),
 				"NamingScheme":    userConfig.NamingScheme,
+				"Ring":            fmt.Sprintf("%v", !userConfig.DisableRing),
 			},
 		})
 		post := &model.Post{
@@ -325,11 +340,26 @@ func (p *Plugin) executeSettingsCommand(_ *plugin.Context, args *model.CommandAr
 			})
 			userConfig = nil
 		}
+	case commandArgRing:
+		switch parameters[1] {
+		case valueTrue:
+			userConfig.DisableRing = false
+		case valueFalse:
+			userConfig.DisableRing = true
+		default:
+			text = p.b.LocalizeWithConfig(l, &i18n.LocalizeConfig{
+				DefaultMessage: &i18n.Message{
+					ID:    "jitsi.command.settings.wrong_ring_value",
+					Other: "Invalid `ring` value, use `true` or `false`.",
+				},
+			})
+			userConfig = nil
+		}
 	default:
 		text = p.b.LocalizeWithConfig(l, &i18n.LocalizeConfig{
 			DefaultMessage: &i18n.Message{
 				ID:    "jitsi.command.settings.wrong_field",
-				Other: "Invalid config field, use `embedded`, `show_prejoin_page` or `naming_scheme`.",
+				Other: "Invalid config field, use `embedded`, `show_prejoin_page`, `naming_scheme` or `ring`.",
 			},
 		})
 		userConfig = nil
