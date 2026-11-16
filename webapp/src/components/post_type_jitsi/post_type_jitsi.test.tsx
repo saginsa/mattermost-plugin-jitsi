@@ -7,6 +7,8 @@ import {Post} from 'mattermost-redux/types/posts';
 import {PostTypeJitsi} from './post_type_jitsi';
 import Constants from 'mattermost-redux/constants/general';
 
+const openNothing = () => null;
+
 describe('PostTypeJitsi', () => {
     const basePost: Post = {
         id: 'test',
@@ -157,8 +159,9 @@ describe('PostTypeJitsi', () => {
         expect(event.preventDefault).toBeCalled();
     });
 
-    it('should not prevent the default link behavior and should not call the action to open jitsi if embedded is false', () => {
+    it('should open jitsi in a new window with the user display name and not call the action if embedded is false', () => {
         defaultProps.actions.openJitsiMeeting.mockClear();
+        const open = jest.spyOn(window, 'open').mockImplementation(openNothing);
         const props = {
             ...defaultProps,
             meetingEmbedded: false
@@ -168,6 +171,21 @@ describe('PostTypeJitsi', () => {
         const event = {preventDefault: jest.fn()};
         wrapper.find('a.btn-primary').simulate('click', event);
         expect(defaultProps.actions.openJitsiMeeting).not.toBeCalled();
-        expect(event.preventDefault).not.toBeCalled();
+        expect(event.preventDefault).toBeCalled();
+        expect(open).toBeCalledWith(
+            'http://test-meeting-link/test?jwt=xxxxxxxxxxxx#config.callDisplayName=%22Test%20topic%22&userInfo.displayName=%22firstLast%22',
+            '_blank',
+            'noopener,noreferrer'
+        );
+        open.mockRestore();
+    });
+
+    it('should not put the user display name in the link that can be copied', () => {
+        const wrapper = shallow(<PostTypeJitsi {...defaultProps}/>);
+        const links = wrapper.find('a');
+        expect(links.length).toBeGreaterThan(0);
+        for (let i = 0; i < links.length; i++) {
+            expect(links.at(i).prop('href')).not.toContain('userInfo.displayName');
+        }
     });
 });

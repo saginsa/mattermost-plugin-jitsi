@@ -54,15 +54,30 @@ export class PostTypeJitsi extends React.PureComponent<Props, State> {
                 this.props.actions.setUserStatus(this.props.currentUser.id, Constants.DND);
                 this.props.actions.openJitsiMeeting(this.props.post, this.state.meetingJwt || this.props.post.props.meeting_jwt || null);
             }
-        } else if (this.state.meetingJwt) {
+        } else if (this.props.post) {
+            // The display name is added only when the current user opens the meeting, so the link
+            // that people copy from the post and share does not carry the copier's name.
             e.preventDefault();
-            if (this.props.post) {
-                const props = this.props.post.props;
-                let meetingLink = props.meeting_link + '?jwt=' + (this.state.meetingJwt);
-                meetingLink += `#config.callDisplayName=${encodeURIComponent(`"${props.meeting_topic || props.default_meeting_topic}"`)}`;
-                window.open(meetingLink, '_blank');
+            if (this.state.meetingJwt) {
+                // The enriched JWT already carries the user's name and avatar.
+                window.open(this.getMeetingLink(this.props.post, this.state.meetingJwt), '_blank', 'noopener,noreferrer');
+            } else {
+                const displayName = `&userInfo.displayName=${encodeURIComponent(`"${this.props.currentUser.username}"`)}`;
+                window.open(this.getMeetingLink(this.props.post) + displayName, '_blank', 'noopener,noreferrer');
             }
         }
+    };
+
+    getMeetingLink = (post: Post, jwt?: string): string => {
+        const props = post.props;
+        let meetingLink = props.meeting_link;
+        if (jwt) {
+            meetingLink += '?jwt=' + encodeURIComponent(jwt);
+        } else if (props.jwt_meeting) {
+            meetingLink += '?jwt=' + encodeURIComponent(props.meeting_jwt);
+        }
+        meetingLink += `#config.callDisplayName=${encodeURIComponent(`"${props.meeting_topic || props.default_meeting_topic}"`)}`;
+        return meetingLink;
     };
 
     renderUntilDate = (post: Post, style: any): React.ReactNode => {
@@ -96,13 +111,7 @@ export class PostTypeJitsi extends React.PureComponent<Props, State> {
 
         const props = post.props;
 
-        let meetingLink = props.meeting_link;
-        if (props.jwt_meeting) {
-            meetingLink += '?jwt=' + encodeURIComponent(props.meeting_jwt);
-        }
-
-        meetingLink += `#config.callDisplayName=${encodeURIComponent(`"${props.meeting_topic || props.default_meeting_topic}"`)}`;
-        meetingLink += `&userInfo.displayName=${encodeURIComponent(`"${this.props.currentUser.username}"`)}`;
+        const meetingLink = this.getMeetingLink(post);
 
         const preText = (
             <FormattedMessage
