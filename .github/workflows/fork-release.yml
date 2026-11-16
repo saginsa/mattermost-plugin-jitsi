@@ -1,0 +1,62 @@
+name: fork-release
+
+# Lints, tests and builds the plugin on every push to master; for tags like v2.1.0+ring.1
+# it also publishes a GitHub release with the plugin archive and its checksum.
+# The upstream cd.yml relies on Mattermost secrets and does not run in this fork.
+
+on:
+  push:
+    branches:
+      - master
+    tags:
+      - 'v*\+ring.*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: webapp/package-lock.json
+
+      - name: Lint
+        run: make check-style
+
+      - name: Test
+        run: make test
+
+      - name: Build
+        run: make dist
+
+      - name: Checksums
+        run: cd dist && sha256sum *.tar.gz > SHA256SUMS && cat SHA256SUMS
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: plugin
+          path: |
+            dist/*.tar.gz
+            dist/SHA256SUMS
+
+      - name: Publish release
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" dist/*.tar.gz dist/SHA256SUMS \
+            --title "$GITHUB_REF_NAME" \
+            --notes-file .github/fork-release-notes.md

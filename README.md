@@ -1,3 +1,14 @@
+# About this fork
+
+This fork adds two features to the official plugin. Ready-to-install builds are on the [Releases](../../releases) page; see [README.ru.md](README.ru.md) for a Russian version.
+
+* **Ring when someone else starts a meeting.** A ringtone in direct and group messages (repeats every 3 s until you open the conversation, click **Join Meeting**, or 30 s pass) and a short chime in channels. Silent for your own meetings, in Do Not Disturb / Out of Office status and in muted channels. The sound is synthesized with WebAudio, no audio files. Desktop and web apps only: mobile apps do not run plugin webapp code.
+  * Admins: **System Console → Plugins → Jitsi → Ring when a meeting starts** (on by default).
+  * Users: `/jitsi settings ring true|false`.
+* **Clean meeting links.** Since 2.1.0 the link in the meeting post includes `userInfo.displayName` with the viewer's username. A link copied from the post and shared makes everyone join under the copier's name. The name is now added only when you click the link.
+
+Both changes are proposed upstream as separate pull requests. Releases are built from public sources by [GitHub Actions](.github/workflows/fork-release.yml) and versioned as `<upstream version>+ring.<n>`. The plugin id stays `jitsi`, so a release replaces the official plugin and keeps its settings; to go back, upload the official release.
+
 # Disclaimer
 
 **This repository is community supported and not maintained by Mattermost. Mattermost disclaims liability for integrations, including Third Party Integrations and Mattermost Integrations. Integrations may be modified or discontinued at any time.**
