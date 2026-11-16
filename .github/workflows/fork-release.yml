@@ -2,7 +2,8 @@ name: fork-release
 
 # Lints, tests and builds the plugin on every push to master; for tags like v2.1.0+ring.1
 # it also publishes a GitHub release with the plugin archive and its checksum.
-# The upstream cd.yml relies on Mattermost secrets and does not run in this fork.
+# It replaces the upstream cd.yml in this fork (disabled in the repository settings) to add
+# release notes and SHA256SUMS; running both would try to create the same release twice.
 
 on:
   push:
