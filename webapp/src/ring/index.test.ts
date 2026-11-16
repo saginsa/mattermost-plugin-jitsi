@@ -11,10 +11,10 @@ function makeState(overrides: {status?: string, currentChannelId?: string, ring?
                 currentChannelId: overrides.currentChannelId || 'other',
                 myMembers: {
                     dm: {notify_props: {mark_unread: 'all'}},
-                    muted: {notify_props: {mark_unread: 'mention'}},
-                },
-            },
-        },
+                    muted: {notify_props: {mark_unread: 'mention'}}
+                }
+            }
+        }
     };
 }
 
@@ -22,8 +22,8 @@ function posted(type: string, userId: string, channelId: string, channelType: st
     return {
         data: {
             channel_type: channelType,
-            post: JSON.stringify({type, user_id: userId, channel_id: channelId, props: {meeting_id: 'meeting'}}),
-        },
+            post: JSON.stringify({type, user_id: userId, channel_id: channelId, props: {meeting_id: 'meeting'}})
+        }
     };
 }
 
@@ -45,7 +45,7 @@ class FakeAudioContext {
             connect: jest.fn(),
             disconnect: () => {
                 this.disconnected++;
-            },
+            }
         };
     }
 
@@ -102,7 +102,7 @@ describe('Ringer', () => {
             getState: () => state,
             createAudioContext: () => ctx as unknown as AudioContext,
             isWindowFocused: () => focused,
-            now: () => now,
+            now: () => now
         });
     });
 

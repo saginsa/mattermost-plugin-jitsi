@@ -27,14 +27,14 @@ const CHIME: Note[] = [[784, 0, 0.4], [1047, 0.18, 0.7]];
 
 export type RingDecision = {
     kind: 'ring' | 'chime',
-    channelId: string,
+    channelId: string
 };
 
 type WebSocketMessage = {
     data?: {
         post?: string | {[key: string]: any},
-        channel_type?: string,
-    },
+        channel_type?: string
+    }
 };
 
 export function ringEnabled(state: any): boolean {
@@ -82,7 +82,7 @@ export function decide(state: any, msg: WebSocketMessage): RingDecision | null {
     const type = data.channel_type;
     return {
         kind: type === 'D' || type === 'G' ? 'ring' : 'chime',
-        channelId: post.channel_id,
+        channelId: post.channel_id
     };
 }
 
@@ -90,14 +90,14 @@ type Ring = {
     channelId: string,
     started: number,
     timer: any,
-    output: GainNode | null,
+    output: GainNode | null
 };
 
 export type RingerDeps = {
     getState: () => any,
     createAudioContext?: () => AudioContext | null,
     isWindowFocused?: () => boolean,
-    now?: () => number,
+    now?: () => number
 };
 
 function defaultAudioContext(): AudioContext | null {
@@ -126,7 +126,7 @@ export class Ringer {
             createAudioContext: defaultAudioContext,
             isWindowFocused: defaultWindowFocused,
             now: Date.now,
-            ...deps,
+            ...deps
         };
     }
 
@@ -204,7 +204,7 @@ export class Ringer {
             channelId: decision.channelId,
             started: this.deps.now(),
             timer: null,
-            output: this.createOutput(),
+            output: this.createOutput()
         };
         this.ring = ring;
         this.play(RINGTONE, ring.output);
