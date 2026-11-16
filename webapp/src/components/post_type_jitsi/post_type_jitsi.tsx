@@ -7,6 +7,7 @@ import Constants from 'mattermost-redux/constants/general';
 import {UserProfile} from 'mattermost-redux/types/users';
 
 import Svgs from 'constants/svgs';
+import {stopRinging} from 'ring';
 
 import {makeStyleFromTheme} from 'mattermost-redux/utils/theme_utils';
 
@@ -47,6 +48,7 @@ export class PostTypeJitsi extends React.PureComponent<Props, State> {
     }
 
     openJitsiMeeting = (e: React.MouseEvent) => {
+        stopRinging();
         if (this.props.meetingEmbedded) {
             e.preventDefault();
             if (this.props.post) {

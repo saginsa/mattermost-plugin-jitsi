@@ -16,9 +16,12 @@ import reducer from './reducers';
 import {startMeeting, loadConfig} from './actions';
 import manifest from './manifest';
 import Client from './client';
+import {Ringer, setActiveRinger} from './ring';
 
 class PluginClass {
     rootPortal?: RootPortal;
+    ringer?: Ringer;
+    unsubscribeRinger?: () => void;
 
     initialize(registry: any, store: any) {
         const {id: pluginId} = manifest;
@@ -62,9 +65,32 @@ class PluginClass {
             <I18nProvider><PostTypeJitsi post={props.post}/></I18nProvider>));
         registry.registerWebSocketEventHandler('custom_jitsi_config_update', () => store.dispatch(loadConfig()));
         store.dispatch(loadConfig());
+
+        this.initializeRinger(registry, store);
+    }
+
+    initializeRinger(registry: any, store: any) {
+        const ringer = new Ringer({getState: store.getState});
+        this.ringer = ringer;
+        setActiveRinger(ringer);
+        registry.registerWebSocketEventHandler('posted', ringer.handlePosted);
+        this.unsubscribeRinger = store.subscribe(ringer.handleStateChange);
+        window.addEventListener('pointerdown', ringer.unlock, true);
+        window.addEventListener('keydown', ringer.unlock, true);
+        window.addEventListener('focus', ringer.handleStateChange);
     }
 
     uninitialize() {
+        if (this.ringer) {
+            this.ringer.stop();
+            window.removeEventListener('pointerdown', this.ringer.unlock, true);
+            window.removeEventListener('keydown', this.ringer.unlock, true);
+            window.removeEventListener('focus', this.ringer.handleStateChange);
+            setActiveRinger(null);
+        }
+        if (this.unsubscribeRinger) {
+            this.unsubscribeRinger();
+        }
         if (this.rootPortal) {
             this.rootPortal.cleanup();
         }
