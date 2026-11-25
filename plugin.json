@@ -93,8 +93,22 @@
                 "key": "JitsiRingOnMeetingStart",
                 "display_name": "Ring when a meeting starts:",
                 "type": "bool",
-                "help_text": "When true, the desktop and web apps play a sound when someone else starts a meeting: a ringtone in direct and group messages (until the user opens the conversation, clicks **Join Meeting**, or 30 seconds pass) and a short chime in channels. Muted channels and users in Do Not Disturb or Out of Office status are not notified. Mobile apps are not supported.",
+                "help_text": "When true, the desktop and web apps play a sound when someone else starts a meeting: a ringtone in direct and group messages (until the user clicks **Join Meeting** or the ring duration passes) and a short chime in channels. Muted channels and users in Do Not Disturb or Out of Office status are not notified. Mobile apps are not supported.",
                 "default": true
+            },
+            {
+                "key": "JitsiRingTimeout",
+                "display_name": "Ring duration (seconds):",
+                "type": "number",
+                "help_text": "How long the ringtone plays in direct and group messages if the user does not click **Join Meeting**. From 5 to 600 seconds.",
+                "default": 60
+            },
+            {
+                "key": "JitsiRingExcludedUsers",
+                "display_name": "Users who never ring:",
+                "type": "text",
+                "help_text": "Usernames, separated by commas or spaces, that never hear the ring or the chime, for example accounts of video conference rooms that receive meeting links in advance. Other users are not affected, including in group messages with these accounts.",
+                "default": ""
             },
             {
                 "key": "JitsiCompatibilityMode",

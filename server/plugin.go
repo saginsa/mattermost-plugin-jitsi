@@ -35,8 +35,12 @@ type UserConfig struct {
 	DisableRing bool `json:"disable_ring,omitempty"`
 
 	// RingOnMeetingStart tells the webapp whether to play that sound: the system setting
-	// JitsiRingOnMeetingStart is on and the user has not disabled it. It is computed on read.
+	// JitsiRingOnMeetingStart is on, the user has not disabled it and is not listed in
+	// JitsiRingExcludedUsers. It is computed on read.
 	RingOnMeetingStart bool `json:"ring_on_meeting_start"`
+
+	// RingTimeout is how long, in seconds, the ringtone plays (JitsiRingTimeout). Computed on read.
+	RingTimeout int `json:"ring_timeout,omitempty"`
 }
 
 type Plugin struct {
@@ -519,27 +523,40 @@ func (p *Plugin) getUserConfig(userID string) (*UserConfig, error) {
 		return nil, appErr
 	}
 
-	if data == nil {
-		return &UserConfig{
-			Embedded:           p.getConfiguration().JitsiEmbedded,
-			NamingScheme:       p.getConfiguration().JitsiNamingScheme,
-			ShowPrejoinPage:    p.getConfiguration().JitsiPrejoinPage,
-			RingOnMeetingStart: p.getConfiguration().JitsiRingOnMeetingStart,
-		}, nil
+	conf := p.getConfiguration()
+	userConfig := UserConfig{
+		Embedded:        conf.JitsiEmbedded,
+		NamingScheme:    conf.JitsiNamingScheme,
+		ShowPrejoinPage: conf.JitsiPrejoinPage,
+	}
+	if data != nil {
+		if err := json.Unmarshal(data, &userConfig); err != nil {
+			return nil, err
+		}
 	}
 
-	var userConfig UserConfig
-	err := json.Unmarshal(data, &userConfig)
-	if err != nil {
-		return nil, err
-	}
-	userConfig.RingOnMeetingStart = p.getConfiguration().JitsiRingOnMeetingStart && !userConfig.DisableRing
+	userConfig.RingOnMeetingStart = conf.JitsiRingOnMeetingStart && !userConfig.DisableRing && !p.isRingExcluded(userID)
+	userConfig.RingTimeout = conf.GetRingTimeout()
 
 	return &userConfig, nil
 }
 
+// isRingExcluded reports whether the user is listed in JitsiRingExcludedUsers.
+func (p *Plugin) isRingExcluded(userID string) bool {
+	if strings.TrimSpace(p.getConfiguration().JitsiRingExcludedUsers) == "" {
+		return false
+	}
+	user, appErr := p.API.GetUser(userID)
+	if appErr != nil || user == nil {
+		return false
+	}
+	return p.getConfiguration().IsRingExcluded(user.Username)
+}
+
 func (p *Plugin) setUserConfig(userID string, config *UserConfig) error {
-	b, err := json.Marshal(config)
+	stored := *config
+	stored.RingTimeout = 0 // computed on read, not stored
+	b, err := json.Marshal(stored)
 	if err != nil {
 		return err
 	}

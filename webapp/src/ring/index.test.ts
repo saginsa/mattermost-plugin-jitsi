@@ -1,10 +1,10 @@
 import {jest, describe, expect, it, beforeEach, afterEach} from '@jest/globals';
 
-import {decide, Ringer, RING_EVERY_MS, RING_MAX_MS, setActiveRinger, stopRinging} from './index';
+import {decide, DEFAULT_RING_TIMEOUT_S, Ringer, RING_EVERY_MS, ringTimeoutMs, setActiveRinger, stopRinging} from './index';
 
-function makeState(overrides: {status?: string, currentChannelId?: string, ring?: boolean} = {}) {
+function makeState(overrides: {status?: string, currentChannelId?: string, ring?: boolean, timeout?: number} = {}) {
     return {
-        'plugins-jitsi': {config: {ring_on_meeting_start: overrides.ring ?? true}},
+        'plugins-jitsi': {config: {ring_on_meeting_start: overrides.ring ?? true, ring_timeout: overrides.timeout}},
         entities: {
             users: {currentUserId: 'me', statuses: {me: overrides.status || 'online'}},
             channels: {
@@ -85,10 +85,21 @@ describe('decide', () => {
     });
 });
 
+describe('ringTimeoutMs', () => {
+    it('uses the server setting', () => {
+        expect(ringTimeoutMs(makeState({timeout: 45}))).toBe(45000);
+    });
+
+    it('falls back to the default', () => {
+        expect(ringTimeoutMs(makeState())).toBe(DEFAULT_RING_TIMEOUT_S * 1000);
+        expect(ringTimeoutMs(makeState({timeout: 0}))).toBe(DEFAULT_RING_TIMEOUT_S * 1000);
+        expect(ringTimeoutMs({})).toBe(DEFAULT_RING_TIMEOUT_S * 1000);
+    });
+});
+
 describe('Ringer', () => {
     let state: any;
     let ctx: FakeAudioContext;
-    let focused: boolean;
     let now: number;
     let ringer: Ringer;
 
@@ -96,12 +107,10 @@ describe('Ringer', () => {
         jest.useFakeTimers();
         state = makeState();
         ctx = new FakeAudioContext();
-        focused = true;
         now = 0;
         ringer = new Ringer({
             getState: () => state,
             createAudioContext: () => ctx as unknown as AudioContext,
-            isWindowFocused: () => focused,
             now: () => now
         });
     });
@@ -116,13 +125,13 @@ describe('Ringer', () => {
         jest.advanceTimersByTime(RING_EVERY_MS);
     }
 
-    it('repeats the ringtone until RING_MAX_MS', () => {
+    it('repeats the ringtone for the default duration', () => {
         ringer.handlePosted(posted('custom_jitsi', 'u', 'dm', 'D'));
         expect(ringer.isRinging()).toBe(true);
         const first = ctx.oscillators;
         tick();
         expect(ctx.oscillators).toBeGreaterThan(first);
-        while (now < RING_MAX_MS) {
+        while (now < DEFAULT_RING_TIMEOUT_S * 1000) {
             tick();
         }
         expect(ringer.isRinging()).toBe(false);
@@ -134,21 +143,22 @@ describe('Ringer', () => {
         expect(ringer.isRinging()).toBe(false);
     });
 
-    it('stops at once when the user opens the conversation', () => {
+    it('keeps ringing when the user opens the conversation', () => {
         ringer.handlePosted(posted('custom_jitsi', 'u', 'dm', 'D'));
         state.entities.channels.currentChannelId = 'dm';
-        ringer.handleStateChange();
-        expect(ringer.isRinging()).toBe(false);
-        expect(ctx.disconnected).toBe(1);
-    });
-
-    it('keeps ringing while the window is not focused', () => {
-        ringer.handlePosted(posted('custom_jitsi', 'u', 'dm', 'D'));
-        focused = false;
-        state.entities.channels.currentChannelId = 'dm';
-        ringer.handleStateChange();
         tick();
         expect(ringer.isRinging()).toBe(true);
+    });
+
+    it('rings for the configured duration', () => {
+        state = makeState({timeout: 90});
+        ringer.handlePosted(posted('custom_jitsi', 'u', 'dm', 'D'));
+        while (now < 87000) {
+            tick();
+        }
+        expect(ringer.isRinging()).toBe(true);
+        tick();
+        expect(ringer.isRinging()).toBe(false);
     });
 
     it('stops and cuts the sound off when the user joins', () => {
@@ -163,10 +173,9 @@ describe('Ringer', () => {
         setActiveRinger(null);
     });
 
-    it('only chimes when the conversation is already open', () => {
+    it('rings even when the conversation is already open', () => {
         state.entities.channels.currentChannelId = 'dm';
         ringer.handlePosted(posted('custom_jitsi', 'u', 'dm', 'D'));
-        expect(ctx.oscillators).toBeGreaterThan(0);
-        expect(ringer.isRinging()).toBe(false);
+        expect(ringer.isRinging()).toBe(true);
     });
 });

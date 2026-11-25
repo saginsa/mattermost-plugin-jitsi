@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"net/url"
 	"reflect"
+	"strings"
+	"unicode"
 
 	"github.com/mattermost/mattermost/server/public/model"
 	"github.com/mattermost/mattermost/server/public/pluginapi/experimental/bot/logger"
@@ -36,6 +38,44 @@ type configuration struct {
 	JitsiCompatibilityMode  bool
 	JitsiPrejoinPage        bool
 	JitsiRingOnMeetingStart bool
+	JitsiRingTimeout        int
+	JitsiRingExcludedUsers  string
+}
+
+const (
+	defaultRingTimeout = 60
+	minRingTimeout     = 5
+	maxRingTimeout     = 600
+)
+
+// GetRingTimeout returns the ring duration in seconds, falling back to the default when the
+// setting is unset and keeping it within sane bounds.
+func (c *configuration) GetRingTimeout() int {
+	switch {
+	case c.JitsiRingTimeout <= 0:
+		return defaultRingTimeout
+	case c.JitsiRingTimeout < minRingTimeout:
+		return minRingTimeout
+	case c.JitsiRingTimeout > maxRingTimeout:
+		return maxRingTimeout
+	}
+	return c.JitsiRingTimeout
+}
+
+// IsRingExcluded reports whether the username is listed in JitsiRingExcludedUsers.
+func (c *configuration) IsRingExcluded(username string) bool {
+	username = strings.ToLower(strings.TrimSpace(username))
+	if username == "" {
+		return false
+	}
+	for _, name := range strings.FieldsFunc(c.JitsiRingExcludedUsers, func(r rune) bool {
+		return r == ',' || r == ';' || unicode.IsSpace(r)
+	}) {
+		if strings.ToLower(strings.TrimPrefix(name, "@")) == username {
+			return true
+		}
+	}
+	return false
 }
 
 const publicJitsiServerURL = "https://meet.jit.si"

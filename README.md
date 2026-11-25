@@ -2,8 +2,8 @@
 
 This fork adds two features to the official plugin. Ready-to-install builds are on the [Releases](../../releases) page; see [README.ru.md](README.ru.md) for a Russian version.
 
-* **Ring when someone else starts a meeting.** A ringtone in direct and group messages (repeats every 3 s until you open the conversation, click **Join Meeting**, or 30 s pass) and a short chime in channels. Silent for your own meetings, in Do Not Disturb / Out of Office status and in muted channels. The sound is synthesized with WebAudio, no audio files. Desktop and web apps only: mobile apps do not run plugin webapp code.
-  * Admins: **System Console → Plugins → Jitsi → Ring when a meeting starts** (on by default).
+* **Ring when someone else starts a meeting.** A ringtone in direct and group messages (repeats every 3 s until you click **Join Meeting** or the ring duration passes, 60 s by default; opening the conversation does not stop it) and a short chime in channels. Silent for your own meetings, in Do Not Disturb / Out of Office status and in muted channels. The sound is synthesized with WebAudio, no audio files. Desktop and web apps only: mobile apps do not run plugin webapp code.
+  * Admins: **System Console → Plugins → Jitsi → Ring when a meeting starts** (on by default), **Ring duration (seconds)** (5–600, default 60) and **Users who never ring** (usernames, e.g. video conference room accounts that receive meeting links in advance).
   * Users: `/jitsi settings ring true|false`.
 * **Clean meeting links.** Since 2.1.0 the link in the meeting post includes `userInfo.displayName` with the viewer's username. A link copied from the post and shared makes everyone join under the copier's name. The name is now added only when you click the link.
 

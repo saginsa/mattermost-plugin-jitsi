@@ -21,7 +21,6 @@ import {Ringer, setActiveRinger} from './ring';
 class PluginClass {
     rootPortal?: RootPortal;
     ringer?: Ringer;
-    unsubscribeRinger?: () => void;
 
     initialize(registry: any, store: any) {
         const {id: pluginId} = manifest;
@@ -74,10 +73,8 @@ class PluginClass {
         this.ringer = ringer;
         setActiveRinger(ringer);
         registry.registerWebSocketEventHandler('posted', ringer.handlePosted);
-        this.unsubscribeRinger = store.subscribe(ringer.handleStateChange);
         window.addEventListener('pointerdown', ringer.unlock, true);
         window.addEventListener('keydown', ringer.unlock, true);
-        window.addEventListener('focus', ringer.handleStateChange);
     }
 
     uninitialize() {
@@ -85,11 +82,7 @@ class PluginClass {
             this.ringer.stop();
             window.removeEventListener('pointerdown', this.ringer.unlock, true);
             window.removeEventListener('keydown', this.ringer.unlock, true);
-            window.removeEventListener('focus', this.ringer.handleStateChange);
             setActiveRinger(null);
-        }
-        if (this.unsubscribeRinger) {
-            this.unsubscribeRinger();
         }
         if (this.rootPortal) {
             this.rootPortal.cleanup();

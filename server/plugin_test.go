@@ -153,3 +153,32 @@ func TestGetUserConfigRingOnMeetingStart(t *testing.T) {
 		})
 	}
 }
+
+func TestGetUserConfigRingTimeout(t *testing.T) {
+	for _, c := range []struct{ set, want int }{{0, 60}, {-1, 60}, {1, 5}, {90, 90}, {5000, 600}} {
+		p := Plugin{configuration: &configuration{JitsiRingOnMeetingStart: true, JitsiRingTimeout: c.set}}
+		apiMock := plugintest.API{}
+		p.SetAPI(&apiMock)
+		apiMock.On("KVGet", "config_user").Return(nil, nil)
+		userConfig, err := p.getUserConfig("user")
+		require.NoError(t, err)
+		require.Equal(t, c.want, userConfig.RingTimeout, "JitsiRingTimeout=%d", c.set)
+	}
+}
+
+func TestGetUserConfigRingExcludedUsers(t *testing.T) {
+	p := Plugin{configuration: &configuration{JitsiRingOnMeetingStart: true, JitsiRingExcludedUsers: " vks-room1, @VKS-Room2;vks3\n"}}
+	apiMock := plugintest.API{}
+	p.SetAPI(&apiMock)
+	apiMock.On("KVGet", mock.Anything).Return(nil, nil)
+	apiMock.On("GetUser", "room").Return(&model.User{Id: "room", Username: "vks-room2"}, nil)
+	apiMock.On("GetUser", "person").Return(&model.User{Id: "person", Username: "ivanov_ii"}, nil)
+
+	userConfig, err := p.getUserConfig("room")
+	require.NoError(t, err)
+	require.False(t, userConfig.RingOnMeetingStart)
+
+	userConfig, err = p.getUserConfig("person")
+	require.NoError(t, err)
+	require.True(t, userConfig.RingOnMeetingStart)
+}

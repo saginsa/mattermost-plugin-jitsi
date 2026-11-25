@@ -3,18 +3,21 @@
 
 // Plays a sound when someone else starts a Jitsi meeting.
 //
-// Direct and group messages: a ringtone repeated every RING_EVERY_MS until the user opens the
-// conversation, clicks "Join Meeting", or RING_MAX_MS pass. Channels: a single short chime.
+// Direct and group messages: a ringtone repeated every RING_EVERY_MS until the user clicks
+// "Join Meeting" or the ring duration passes (JitsiRingTimeout, ring_timeout in the config,
+// DEFAULT_RING_TIMEOUT_S if missing). Opening the conversation does not stop it: the user may
+// read the chat without joining. Channels: a single short chime.
 // Silent for the user's own meetings, Do Not Disturb / Out of Office and muted channels.
-// Admins turn it on or off with the JitsiRingOnMeetingStart setting, users with
-// "/jitsi settings ring [true/false]"; the server combines both into ring_on_meeting_start.
+// Admins turn it on or off with the JitsiRingOnMeetingStart setting and exclude accounts
+// (e.g. video conference rooms) with JitsiRingExcludedUsers, users with
+// "/jitsi settings ring [true/false]"; the server combines them into ring_on_meeting_start.
 //
 // Sounds are synthesized with WebAudio, so the plugin ships no audio files.
 
 import manifest from '../manifest';
 
 export const RING_EVERY_MS = 3000;
-export const RING_MAX_MS = 30000;
+export const DEFAULT_RING_TIMEOUT_S = 60;
 const VOLUME = 0.25;
 
 type Note = [number, number, number]; // frequency (Hz), offset (s), duration (s)
@@ -37,9 +40,20 @@ type WebSocketMessage = {
     }
 };
 
+function pluginConfig(state: any): any {
+    return state && state[`plugins-${manifest.id}`] && state[`plugins-${manifest.id}`].config;
+}
+
 export function ringEnabled(state: any): boolean {
-    const config = state && state[`plugins-${manifest.id}`] && state[`plugins-${manifest.id}`].config;
+    const config = pluginConfig(state);
     return Boolean(config && config.ring_on_meeting_start);
+}
+
+// ringTimeoutMs returns how long the ringtone plays, from the server setting.
+export function ringTimeoutMs(state: any): number {
+    const config = pluginConfig(state);
+    const seconds = config && Number(config.ring_timeout);
+    return (seconds && seconds > 0 ? seconds : DEFAULT_RING_TIMEOUT_S) * 1000;
 }
 
 // decide returns what to play for a "posted" websocket event, or null for silence.
@@ -89,6 +103,7 @@ export function decide(state: any, msg: WebSocketMessage): RingDecision | null {
 type Ring = {
     channelId: string,
     started: number,
+    timeoutMs: number,
     timer: any,
     output: GainNode | null
 };
@@ -96,7 +111,6 @@ type Ring = {
 export type RingerDeps = {
     getState: () => any,
     createAudioContext?: () => AudioContext | null,
-    isWindowFocused?: () => boolean,
     now?: () => number
 };
 
@@ -112,10 +126,6 @@ function defaultAudioContext(): AudioContext | null {
     }
 }
 
-function defaultWindowFocused(): boolean {
-    return document.visibilityState === 'visible' && document.hasFocus();
-}
-
 export class Ringer {
     private deps: Required<RingerDeps>;
     private ctx: AudioContext | null = null;
@@ -124,7 +134,6 @@ export class Ringer {
     constructor(deps: RingerDeps) {
         this.deps = {
             createAudioContext: defaultAudioContext,
-            isWindowFocused: defaultWindowFocused,
             now: Date.now,
             ...deps
         };
@@ -147,13 +156,6 @@ export class Ringer {
             this.startRing(decision);
         } else {
             this.play(CHIME, null);
-        }
-    };
-
-    // Stops the ringtone when the user is looking at the ringing conversation.
-    handleStateChange = () => {
-        if (this.ring && this.looking(this.ring.channelId)) {
-            this.stop();
         }
     };
 
@@ -185,24 +187,12 @@ export class Ringer {
         return this.ctx;
     }
 
-    private looking(channelId: string): boolean {
-        try {
-            return this.deps.isWindowFocused() && this.deps.getState().entities.channels.currentChannelId === channelId;
-        } catch (e) {
-            return false;
-        }
-    }
-
     private startRing(decision: RingDecision) {
         this.stop();
-        if (this.looking(decision.channelId)) {
-            this.play(CHIME, null); // already in the conversation: a chime is enough
-            return;
-        }
-
         const ring: Ring = {
             channelId: decision.channelId,
             started: this.deps.now(),
+            timeoutMs: ringTimeoutMs(this.deps.getState()),
             timer: null,
             output: this.createOutput()
         };
@@ -212,7 +202,7 @@ export class Ringer {
             if (this.ring !== ring) {
                 return;
             }
-            if (this.deps.now() - ring.started >= RING_MAX_MS || this.looking(ring.channelId)) {
+            if (this.deps.now() - ring.started >= ring.timeoutMs) {
                 this.stop();
                 return;
             }
