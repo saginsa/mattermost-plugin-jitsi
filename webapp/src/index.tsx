@@ -71,8 +71,13 @@ class PluginClass {
     initializeRinger(registry: any, store: any) {
         const ringer = new Ringer({getState: store.getState});
         this.ringer = ringer;
-        setActiveRinger(ringer);
+        setActiveRinger(ringer, () => {
+            Client.stopRing().catch(() => {
+                // other apps stop by the ring duration anyway
+            });
+        });
         registry.registerWebSocketEventHandler('posted', ringer.handlePosted);
+        registry.registerWebSocketEventHandler(`custom_${manifest.id}_ring_stop`, ringer.stop);
         window.addEventListener('pointerdown', ringer.unlock, true);
         window.addEventListener('keydown', ringer.unlock, true);
     }

@@ -24,6 +24,10 @@ export default class Client {
         return this.doPut(`${this.serverUrl}/api/v4/users/${userId}/status`, {user_id: userId, status});
     };
 
+    stopRing = async () => {
+        return this.doPost(`${this.url}/api/v1/ring/stop`, {});
+    };
+
     loadConfig = async () => {
         return this.doPost(`${this.url}/api/v1/config`, {});
     };

@@ -2,6 +2,8 @@ package main
 
 import (
 	"encoding/json"
+	"net/http"
+	"net/http/httptest"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -181,4 +183,24 @@ func TestGetUserConfigRingExcludedUsers(t *testing.T) {
 	userConfig, err = p.getUserConfig("person")
 	require.NoError(t, err)
 	require.True(t, userConfig.RingOnMeetingStart)
+}
+
+func TestHandleRingStop(t *testing.T) {
+	p := Plugin{configuration: &configuration{}}
+	apiMock := plugintest.API{}
+	p.SetAPI(&apiMock)
+	var nilMap map[string]interface{}
+	apiMock.On("PublishWebSocketEvent", ringStopEvent, nilMap, &model.WebsocketBroadcast{UserId: "user"}).Return()
+
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest(http.MethodPost, "/api/v1/ring/stop", nil)
+	r.Header.Set("Mattermost-User-Id", "user")
+	p.ServeHTTP(nil, w, r)
+	require.Equal(t, http.StatusOK, w.Code)
+	apiMock.AssertNumberOfCalls(t, "PublishWebSocketEvent", 1)
+
+	w = httptest.NewRecorder()
+	p.ServeHTTP(nil, w, httptest.NewRequest(http.MethodPost, "/api/v1/ring/stop", nil))
+	require.Equal(t, http.StatusUnauthorized, w.Code)
+	apiMock.AssertNumberOfCalls(t, "PublishWebSocketEvent", 1)
 }

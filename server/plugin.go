@@ -26,6 +26,9 @@ const jitsiNameSchemeUUID = "uuid"
 const jitsiNameSchemeMattermost = "mattermost"
 const configChangeEvent = "config_update"
 
+// ringStopEvent tells all clients of a user to stop ringing: the user joined on one of them.
+const ringStopEvent = "ring_stop"
+
 type UserConfig struct {
 	NamingScheme    string `json:"naming_scheme"`
 	Embedded        bool   `json:"embedded"`

@@ -248,14 +248,25 @@ export class Ringer {
 }
 
 let activeRinger: Ringer | null = null;
+let notifyOtherApps: (() => void) | null = null;
 
-export function setActiveRinger(ringer: Ringer | null) {
+// setActiveRinger registers the ringer and how to tell the user's other apps to stop ringing.
+export function setActiveRinger(ringer: Ringer | null, notify: (() => void) | null = null) {
     activeRinger = ringer;
+    notifyOtherApps = ringer ? notify : null;
 }
 
-// stopRinging is called when the user joins a meeting.
+// stopRinging is called when the user joins a meeting: stops the ring here and in the
+// user's other apps (the server sends them a ring_stop event, see handleRingStopEvent).
 export function stopRinging() {
     if (activeRinger) {
         activeRinger.stop();
+    }
+    if (notifyOtherApps) {
+        try {
+            notifyOtherApps();
+        } catch (e) {
+            // the local ring is already stopped
+        }
     }
 }

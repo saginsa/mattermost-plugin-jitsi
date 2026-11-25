@@ -173,6 +173,25 @@ describe('Ringer', () => {
         setActiveRinger(null);
     });
 
+    it('tells the other apps to stop when the user joins', () => {
+        const notify = jest.fn();
+        setActiveRinger(ringer, notify);
+        ringer.handlePosted(posted('custom_jitsi', 'u', 'dm', 'D'));
+        stopRinging();
+        expect(ringer.isRinging()).toBe(false);
+        expect(notify).toHaveBeenCalledTimes(1);
+        setActiveRinger(null, notify);
+        stopRinging();
+        expect(notify).toHaveBeenCalledTimes(1);
+    });
+
+    it('stops on a ring_stop event from another app', () => {
+        ringer.handlePosted(posted('custom_jitsi', 'u', 'dm', 'D'));
+        ringer.stop();
+        expect(ringer.isRinging()).toBe(false);
+        expect(ctx.disconnected).toBe(1);
+    });
+
     it('rings even when the conversation is already open', () => {
         state.entities.channels.currentChannelId = 'dm';
         ringer.handlePosted(posted('custom_jitsi', 'u', 'dm', 'D'));

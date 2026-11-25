@@ -41,6 +41,8 @@ func (p *Plugin) ServeHTTP(_ *plugin.Context, w http.ResponseWriter, r *http.Req
 	switch path := r.URL.Path; path {
 	case "/api/v1/meetings/enrich":
 		p.handleEnrichMeetingJwt(w, r)
+	case "/api/v1/ring/stop":
+		p.handleRingStop(w, r)
 	case "/api/v1/meetings":
 		p.handleStartMeeting(w, r)
 	case "/api/v1/config":
@@ -49,6 +51,27 @@ func (p *Plugin) ServeHTTP(_ *plugin.Context, w http.ResponseWriter, r *http.Req
 		p.handleExternalAPIjs(w, r)
 	default:
 		http.NotFound(w, r)
+	}
+}
+
+// handleRingStop is called when the user joins a meeting: the other apps of the same user
+// (desktop and a browser tab, say) stop ringing too.
+func (p *Plugin) handleRingStop(w http.ResponseWriter, r *http.Request) {
+	userID := r.Header.Get("Mattermost-User-Id")
+	if userID == "" {
+		http.Error(w, "Not authorized", http.StatusUnauthorized)
+		return
+	}
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	p.API.PublishWebSocketEvent(ringStopEvent, nil, &model.WebsocketBroadcast{UserId: userID})
+
+	w.Header().Set("Content-Type", "application/json")
+	if _, err := w.Write([]byte(`{"status":"OK"}`)); err != nil {
+		mlog.Warn("Unable to write response body", mlog.String("handler", "handleRingStop"), mlog.Err(err))
 	}
 }
 
