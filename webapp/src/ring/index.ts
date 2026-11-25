@@ -6,7 +6,9 @@
 // Direct and group messages: a ringtone repeated every RING_EVERY_MS until the user clicks
 // "Join Meeting" or the ring duration passes (JitsiRingTimeout, ring_timeout in the config,
 // DEFAULT_RING_TIMEOUT_S if missing). Opening the conversation does not stop it: the user may
-// read the chat without joining. Channels: a single short chime.
+// read the chat without joining. Each user's ring is separate. Public and private channels ring
+// the same way when the server marked the post with ring_in_channel (the channel has at most
+// JitsiRingMaxChannelMembers members), otherwise they play a single short chime.
 // Silent for the user's own meetings, Do Not Disturb / Out of Office and muted channels.
 // Admins turn it on or off with the JitsiRingOnMeetingStart setting and exclude accounts
 // (e.g. video conference rooms) with JitsiRingExcludedUsers, users with
@@ -94,8 +96,9 @@ export function decide(state: any, msg: WebSocketMessage): RingDecision | null {
     }
 
     const type = data.channel_type;
+    const ring = type === 'D' || type === 'G' || Boolean(post.props && post.props.ring_in_channel);
     return {
-        kind: type === 'D' || type === 'G' ? 'ring' : 'chime',
+        kind: ring ? 'ring' : 'chime',
         channelId: post.channel_id
     };
 }

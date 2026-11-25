@@ -48,7 +48,7 @@ func TestCommandHelp(t *testing.T) {
     * |uuid|: UUID (universally unique identifier)
     * |mattermost|: Mattermost specific names. Combination of team name, channel name and random text in public and private channels; personal meeting name in direct and group messages channels.
     * |ask|: The plugin asks you to select the name every time you start a meeting
-* |/jitsi settings ring [true/false]|: When true, a sound plays when someone else starts a meeting: a ringtone in direct and group messages, a short chime in channels. Desktop and web apps only.`, "|", "`")
+* |/jitsi settings ring [true/false]|: When true, a sound plays when someone else starts a meeting: a ringtone in direct and group messages and small channels, a short chime in large channels. Desktop and web apps only.`, "|", "`")
 
 	apiMock.On("SendEphemeralPost", "test-user", &model.Post{
 		UserId:    "test-bot-id",

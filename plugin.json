@@ -93,7 +93,7 @@
                 "key": "JitsiRingOnMeetingStart",
                 "display_name": "Ring when a meeting starts:",
                 "type": "bool",
-                "help_text": "When true, the desktop and web apps play a sound when someone else starts a meeting: a ringtone in direct and group messages (until the user clicks **Join Meeting** or the ring duration passes) and a short chime in channels. Muted channels and users in Do Not Disturb or Out of Office status are not notified. Mobile apps are not supported.",
+                "help_text": "When true, the desktop and web apps play a sound when someone else starts a meeting: a ringtone (until the user clicks **Join Meeting** or the ring duration passes) in direct and group messages and in channels up to the member limit below, a short chime in larger channels. Each user's ring is separate: one user joining does not stop it for others. Muted channels and users in Do Not Disturb or Out of Office status are not notified. Mobile apps are not supported.",
                 "default": true
             },
             {
@@ -104,10 +104,17 @@
                 "default": 60
             },
             {
+                "key": "JitsiRingMaxChannelMembers",
+                "display_name": "Ring in channels with at most this many members:",
+                "type": "number",
+                "help_text": "Meetings in public and private channels with more members than this only play a short chime. 0 means no limit: every channel rings. Direct and group messages always ring.",
+                "default": 50
+            },
+            {
                 "key": "JitsiRingExcludedUsers",
                 "display_name": "Users who never ring:",
                 "type": "text",
-                "help_text": "Usernames, separated by commas or spaces, that never hear the ring or the chime, for example accounts of video conference rooms that receive meeting links in advance. Other users are not affected, including in group messages with these accounts.",
+                "help_text": "Usernames, separated by commas or spaces, that never hear the ringtone or the chime, for example accounts of video conference rooms that receive meeting links in advance. Other users are not affected, including in group messages with these accounts.",
                 "default": ""
             },
             {

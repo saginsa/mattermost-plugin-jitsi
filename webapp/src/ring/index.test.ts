@@ -18,11 +18,11 @@ function makeState(overrides: {status?: string, currentChannelId?: string, ring?
     };
 }
 
-function posted(type: string, userId: string, channelId: string, channelType: string) {
+function posted(type: string, userId: string, channelId: string, channelType: string, props: {[key: string]: any} = {}) {
     return {
         data: {
             channel_type: channelType,
-            post: JSON.stringify({type, user_id: userId, channel_id: channelId, props: {meeting_id: 'meeting'}})
+            post: JSON.stringify({type, user_id: userId, channel_id: channelId, props: {meeting_id: 'meeting', ...props}})
         }
     };
 }
@@ -68,7 +68,10 @@ describe('decide', () => {
         expect(decide(makeState(), posted('custom_jitsi', 'u', 'gm', 'G'))).toEqual({kind: 'ring', channelId: 'gm'});
     });
 
-    it('chimes in channels', () => {
+    it('rings in channels within the member limit, chimes in larger ones', () => {
+        expect(decide(makeState(), posted('custom_jitsi', 'u', 'team', 'O', {ring_in_channel: true}))).toEqual({kind: 'ring', channelId: 'team'});
+        expect(decide(makeState(), posted('custom_jitsi', 'u', 'team', 'P', {ring_in_channel: true}))).toEqual({kind: 'ring', channelId: 'team'});
+        expect(decide(makeState(), posted('custom_jitsi', 'u', 'town', 'O', {ring_in_channel: false}))).toEqual({kind: 'chime', channelId: 'town'});
         expect(decide(makeState(), posted('custom_jitsi', 'u', 'town', 'O'))).toEqual({kind: 'chime', channelId: 'town'});
     });
 

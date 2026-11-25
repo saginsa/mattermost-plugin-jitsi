@@ -204,3 +204,23 @@ func TestHandleRingStop(t *testing.T) {
 	require.Equal(t, http.StatusUnauthorized, w.Code)
 	apiMock.AssertNumberOfCalls(t, "PublishWebSocketEvent", 1)
 }
+
+func TestRingInChannel(t *testing.T) {
+	for _, c := range []struct {
+		limit   int
+		members int64
+		want    bool
+	}{{0, 500, true}, {50, 50, true}, {50, 51, false}, {-1, 500, true}} {
+		p := Plugin{configuration: &configuration{JitsiRingMaxChannelMembers: c.limit}}
+		apiMock := plugintest.API{}
+		p.SetAPI(&apiMock)
+		apiMock.On("GetChannelStats", "ch").Return(&model.ChannelStats{ChannelId: "ch", MemberCount: c.members}, nil)
+		require.Equal(t, c.want, p.ringInChannel("ch"), "limit %d, members %d", c.limit, c.members)
+	}
+
+	p := Plugin{configuration: &configuration{JitsiRingMaxChannelMembers: 50}}
+	apiMock := plugintest.API{}
+	p.SetAPI(&apiMock)
+	apiMock.On("GetChannelStats", "ch").Return(nil, &model.AppError{Message: "boom"})
+	require.False(t, p.ringInChannel("ch"))
+}

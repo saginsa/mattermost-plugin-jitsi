@@ -391,12 +391,29 @@ func (p *Plugin) startMeeting(user *model.User, channel *model.Channel, meetingI
 		},
 		RootId: rootID,
 	}
+	if channel.Type == model.ChannelTypeOpen || channel.Type == model.ChannelTypePrivate {
+		post.AddProp("ring_in_channel", p.ringInChannel(channel.Id))
+	}
 
 	if _, err := p.API.CreatePost(post); err != nil {
 		return "", err
 	}
 
 	return meetingID, nil
+}
+
+// ringInChannel tells the webapp whether a meeting in a public or private channel rings like
+// a direct message (the channel has at most JitsiRingMaxChannelMembers members) or only chimes.
+func (p *Plugin) ringInChannel(channelID string) bool {
+	limit := p.getConfiguration().JitsiRingMaxChannelMembers
+	if limit <= 0 {
+		return true
+	}
+	stats, appErr := p.API.GetChannelStats(channelID)
+	if appErr != nil || stats == nil {
+		return false
+	}
+	return stats.MemberCount <= int64(limit)
 }
 
 // MarshalBinary default marshaling to JSON.

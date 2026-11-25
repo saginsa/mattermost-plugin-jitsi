@@ -28,18 +28,19 @@ import (
 // If you add non-reference types to your configuration struct, be sure to rewrite Clone as a deep
 // copy appropriate for your types.
 type configuration struct {
-	JitsiURL                string
-	JitsiAppID              string
-	JitsiAppSecret          string
-	JitsiNamingScheme       string
-	JitsiLinkValidTime      int
-	JitsiJWT                bool
-	JitsiEmbedded           bool
-	JitsiCompatibilityMode  bool
-	JitsiPrejoinPage        bool
-	JitsiRingOnMeetingStart bool
-	JitsiRingTimeout        int
-	JitsiRingExcludedUsers  string
+	JitsiURL                   string
+	JitsiAppID                 string
+	JitsiAppSecret             string
+	JitsiNamingScheme          string
+	JitsiLinkValidTime         int
+	JitsiJWT                   bool
+	JitsiEmbedded              bool
+	JitsiCompatibilityMode     bool
+	JitsiPrejoinPage           bool
+	JitsiRingOnMeetingStart    bool
+	JitsiRingTimeout           int
+	JitsiRingMaxChannelMembers int
+	JitsiRingExcludedUsers     string
 }
 
 const (
