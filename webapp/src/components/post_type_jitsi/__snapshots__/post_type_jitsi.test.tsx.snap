@@ -138,7 +138,7 @@ exports[`PostTypeJitsi should render a post if the post type is not null, and sh
                 values={Object {}}
               />
               <b>
-                Thu Jan 01 1970 03:02:03 GMT+0300 (Moscow Standard Time)
+                Thu Jan 01 1970 00:02:03 GMT+0000 (Coordinated Universal Time)
               </b>
             </div>
           </div>
@@ -422,7 +422,7 @@ exports[`PostTypeJitsi should render the a different subtitle if the meeting is 
                 values={Object {}}
               />
               <b>
-                Thu Jan 01 1970 03:02:03 GMT+0300 (Moscow Standard Time)
+                Thu Jan 01 1970 00:02:03 GMT+0000 (Coordinated Universal Time)
               </b>
             </div>
           </div>
