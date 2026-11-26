@@ -4,6 +4,8 @@ import {shallow} from 'enzyme';
 
 import {Post} from 'mattermost-redux/types/posts';
 
+import {setActiveRinger, Ringer} from 'ring';
+
 import {PostTypeJitsi} from './post_type_jitsi';
 import Constants from 'mattermost-redux/constants/general';
 
@@ -178,6 +180,24 @@ describe('PostTypeJitsi', () => {
             'noopener,noreferrer'
         );
         open.mockRestore();
+    });
+
+    it('should stop the ring on a middle click or the context menu without changing the link behavior', () => {
+        for (const eventName of ['auxclick', 'contextmenu']) {
+            const stop = jest.fn();
+            const notify = jest.fn();
+            setActiveRinger({stop} as unknown as Ringer, notify);
+            const wrapper = shallow(<PostTypeJitsi {...defaultProps}/>);
+            const links = wrapper.find('a');
+            for (let i = 0; i < links.length; i++) {
+                const event = {preventDefault: jest.fn()};
+                links.at(i).simulate(eventName, event);
+                expect(event.preventDefault).not.toBeCalled();
+            }
+            expect(stop).toHaveBeenCalledTimes(links.length);
+            expect(notify).toHaveBeenCalledTimes(links.length);
+            setActiveRinger(null);
+        }
     });
 
     it('should not put the user display name in the link that can be copied', () => {

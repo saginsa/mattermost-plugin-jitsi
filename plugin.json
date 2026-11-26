@@ -112,9 +112,16 @@
             },
             {
                 "key": "JitsiRingExcludedUsers",
-                "display_name": "Users who never ring:",
+                "display_name": "Users who never hear the ring:",
                 "type": "text",
                 "help_text": "Usernames, separated by commas or spaces, that never hear the ringtone or the chime, for example accounts of video conference rooms that receive meeting links in advance. Other users are not affected, including in group messages with these accounts.",
+                "default": ""
+            },
+            {
+                "key": "JitsiRingSilentSenders",
+                "display_name": "Accounts whose meetings never ring:",
+                "type": "text",
+                "help_text": "Usernames, separated by commas or spaces, whose meetings ring nobody: the meeting post appears as usual, without the ringtone or the chime. For example a bot or an integration that posts meeting links in advance. These accounts still hear meetings started by others, unless they are also listed above.",
                 "default": ""
             },
             {

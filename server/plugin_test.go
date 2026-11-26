@@ -185,6 +185,27 @@ func TestGetUserConfigRingExcludedUsers(t *testing.T) {
 	require.True(t, userConfig.RingOnMeetingStart)
 }
 
+func TestMessageWillBePostedSilencesListedSenders(t *testing.T) {
+	p := Plugin{configuration: &configuration{JitsiRingOnMeetingStart: true, JitsiRingExcludedUsers: "ivanov_ii", JitsiRingSilentSenders: "meeting-bot"}}
+	apiMock := plugintest.API{}
+	p.SetAPI(&apiMock)
+	apiMock.On("GetUser", "bot").Return(&model.User{Id: "bot", Username: "meeting-bot"}, nil)
+	apiMock.On("GetUser", "person").Return(&model.User{Id: "person", Username: "ivanov_ii"}, nil)
+
+	post, reason := p.MessageWillBePosted(nil, &model.Post{UserId: "bot", Type: "custom_jitsi"})
+	require.Empty(t, reason)
+	require.NotNil(t, post)
+	require.Equal(t, true, post.GetProp("ring_silent"))
+
+	post, _ = p.MessageWillBePosted(nil, &model.Post{UserId: "person", Type: "custom_jitsi"})
+	require.Nil(t, post)
+
+	// Other posts are not looked at.
+	post, _ = p.MessageWillBePosted(nil, &model.Post{UserId: "bot", Message: "hello"})
+	require.Nil(t, post)
+	apiMock.AssertNumberOfCalls(t, "GetUser", 2)
+}
+
 func TestHandleRingStop(t *testing.T) {
 	p := Plugin{configuration: &configuration{}}
 	apiMock := plugintest.API{}

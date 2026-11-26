@@ -41,6 +41,7 @@ type configuration struct {
 	JitsiRingTimeout           int
 	JitsiRingMaxChannelMembers int
 	JitsiRingExcludedUsers     string
+	JitsiRingSilentSenders     string
 }
 
 const (
@@ -63,13 +64,26 @@ func (c *configuration) GetRingTimeout() int {
 	return c.JitsiRingTimeout
 }
 
-// IsRingExcluded reports whether the username is listed in JitsiRingExcludedUsers.
+// IsRingExcluded reports whether the username is listed in JitsiRingExcludedUsers: the user never
+// hears the ring.
 func (c *configuration) IsRingExcluded(username string) bool {
+	return usernameListed(c.JitsiRingExcludedUsers, username)
+}
+
+// IsRingSilentSender reports whether the username is listed in JitsiRingSilentSenders: meetings
+// this account starts or posts ring nobody.
+func (c *configuration) IsRingSilentSender(username string) bool {
+	return usernameListed(c.JitsiRingSilentSenders, username)
+}
+
+// usernameListed reports whether the username is in a list of usernames separated by commas,
+// semicolons or spaces, with or without a leading @, ignoring case.
+func usernameListed(list, username string) bool {
 	username = strings.ToLower(strings.TrimSpace(username))
 	if username == "" {
 		return false
 	}
-	for _, name := range strings.FieldsFunc(c.JitsiRingExcludedUsers, func(r rune) bool {
+	for _, name := range strings.FieldsFunc(list, func(r rune) bool {
 		return r == ',' || r == ';' || unicode.IsSpace(r)
 	}) {
 		if strings.ToLower(strings.TrimPrefix(name, "@")) == username {

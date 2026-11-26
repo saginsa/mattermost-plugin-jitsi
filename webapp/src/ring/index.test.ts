@@ -75,6 +75,11 @@ describe('decide', () => {
         expect(decide(makeState(), posted('custom_jitsi', 'u', 'town', 'O'))).toEqual({kind: 'chime', channelId: 'town'});
     });
 
+    it('is silent for meetings from accounts the server marked ring_silent', () => {
+        expect(decide(makeState(), posted('custom_jitsi', 'bot', 'dm', 'D', {ring_silent: true}))).toBeNull();
+        expect(decide(makeState(), posted('custom_jitsi', 'bot', 'team', 'O', {ring_in_channel: true, ring_silent: true}))).toBeNull();
+    });
+
     it('is silent when turned off, muted, dnd or ooo', () => {
         expect(decide(makeState({ring: false}), posted('custom_jitsi', 'u', 'dm', 'D'))).toBeNull();
         expect(decide(makeState(), posted('custom_jitsi', 'u', 'muted', 'O'))).toBeNull();

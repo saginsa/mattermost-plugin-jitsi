@@ -63,7 +63,9 @@ exports[`PostTypeJitsi should render a post if the post type is not null, and sh
           />
           <a
             href="http://test-meeting-link/test?jwt=xxxxxxxxxxxx#config.callDisplayName=%22Test%20topic%22"
+            onAuxClick={[Function]}
             onClick={[Function]}
+            onContextMenu={[Function]}
             rel="noopener noreferrer"
             target="_blank"
           >
@@ -85,7 +87,9 @@ exports[`PostTypeJitsi should render a post if the post type is not null, and sh
               <a
                 className="btn btn-lg btn-primary"
                 href="http://test-meeting-link/test?jwt=xxxxxxxxxxxx#config.callDisplayName=%22Test%20topic%22"
+                onAuxClick={[Function]}
                 onClick={[Function]}
+                onContextMenu={[Function]}
                 rel="noopener noreferrer"
                 style={
                   Object {
@@ -134,7 +138,7 @@ exports[`PostTypeJitsi should render a post if the post type is not null, and sh
                 values={Object {}}
               />
               <b>
-                Thu Jan 01 1970 00:02:03 GMT+0000 (Coordinated Universal Time)
+                Thu Jan 01 1970 03:02:03 GMT+0300 (Moscow Standard Time)
               </b>
             </div>
           </div>
@@ -208,7 +212,9 @@ exports[`PostTypeJitsi should render a post without token if there is no jwt tok
           />
           <a
             href="http://test-meeting-link/test#config.callDisplayName=%22Test%20topic%22"
+            onAuxClick={[Function]}
             onClick={[Function]}
+            onContextMenu={[Function]}
             rel="noopener noreferrer"
             target="_blank"
           >
@@ -230,7 +236,9 @@ exports[`PostTypeJitsi should render a post without token if there is no jwt tok
               <a
                 className="btn btn-lg btn-primary"
                 href="http://test-meeting-link/test#config.callDisplayName=%22Test%20topic%22"
+                onAuxClick={[Function]}
                 onClick={[Function]}
+                onContextMenu={[Function]}
                 rel="noopener noreferrer"
                 style={
                   Object {
@@ -339,7 +347,9 @@ exports[`PostTypeJitsi should render the a different subtitle if the meeting is 
           />
           <a
             href="http://test-meeting-link/test?jwt=xxxxxxxxxxxx#config.callDisplayName=%22Test%20topic%22"
+            onAuxClick={[Function]}
             onClick={[Function]}
+            onContextMenu={[Function]}
             rel="noopener noreferrer"
             target="_blank"
           >
@@ -361,7 +371,9 @@ exports[`PostTypeJitsi should render the a different subtitle if the meeting is 
               <a
                 className="btn btn-lg btn-primary"
                 href="http://test-meeting-link/test?jwt=xxxxxxxxxxxx#config.callDisplayName=%22Test%20topic%22"
+                onAuxClick={[Function]}
                 onClick={[Function]}
+                onContextMenu={[Function]}
                 rel="noopener noreferrer"
                 style={
                   Object {
@@ -410,7 +422,7 @@ exports[`PostTypeJitsi should render the a different subtitle if the meeting is 
                 values={Object {}}
               />
               <b>
-                Thu Jan 01 1970 00:02:03 GMT+0000 (Coordinated Universal Time)
+                Thu Jan 01 1970 03:02:03 GMT+0300 (Moscow Standard Time)
               </b>
             </div>
           </div>

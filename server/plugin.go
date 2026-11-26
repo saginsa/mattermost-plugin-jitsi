@@ -561,6 +561,29 @@ func (p *Plugin) getUserConfig(userID string) (*UserConfig, error) {
 	return &userConfig, nil
 }
 
+// MessageWillBePosted marks meeting posts from accounts listed in JitsiRingSilentSenders as
+// silent, so that a bot or a video conference room that sends meeting links (often in advance)
+// does not ring the recipients. The webapp skips posts with the ring_silent prop.
+func (p *Plugin) MessageWillBePosted(_ *plugin.Context, post *model.Post) (*model.Post, string) {
+	if post == nil || post.Type != "custom_jitsi" || !p.isRingSilentSender(post.UserId) {
+		return nil, ""
+	}
+	post.AddProp("ring_silent", true)
+	return post, ""
+}
+
+// isRingSilentSender reports whether the user is listed in JitsiRingSilentSenders.
+func (p *Plugin) isRingSilentSender(userID string) bool {
+	if strings.TrimSpace(p.getConfiguration().JitsiRingSilentSenders) == "" {
+		return false
+	}
+	user, appErr := p.API.GetUser(userID)
+	if appErr != nil || user == nil {
+		return false
+	}
+	return p.getConfiguration().IsRingSilentSender(user.Username)
+}
+
 // isRingExcluded reports whether the user is listed in JitsiRingExcludedUsers.
 func (p *Plugin) isRingExcluded(userID string) bool {
 	if strings.TrimSpace(p.getConfiguration().JitsiRingExcludedUsers) == "" {

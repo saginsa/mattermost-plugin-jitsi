@@ -47,6 +47,12 @@ export class PostTypeJitsi extends React.PureComponent<Props, State> {
         }
     }
 
+    // A middle click or the context menu ("Open link", "Copy link") also means the user has seen
+    // the meeting, so they stop the ring too. The browser handles the link as usual.
+    stopRingOnOtherClick = () => {
+        stopRinging();
+    };
+
     openJitsiMeeting = (e: React.MouseEvent) => {
         stopRinging();
         if (this.props.meetingEmbedded) {
@@ -163,6 +169,8 @@ export class PostTypeJitsi extends React.PureComponent<Props, State> {
                                     target='_blank'
                                     rel='noopener noreferrer'
                                     onClick={this.openJitsiMeeting}
+                                    onAuxClick={this.stopRingOnOtherClick}
+                                    onContextMenu={this.stopRingOnOtherClick}
                                     href={meetingLink}
                                 >
                                     {props.meeting_id}
@@ -177,6 +185,8 @@ export class PostTypeJitsi extends React.PureComponent<Props, State> {
                                             target='_blank'
                                             rel='noopener noreferrer'
                                             onClick={this.openJitsiMeeting}
+                                            onAuxClick={this.stopRingOnOtherClick}
+                                            onContextMenu={this.stopRingOnOtherClick}
                                             href={meetingLink}
                                         >
                                             <i

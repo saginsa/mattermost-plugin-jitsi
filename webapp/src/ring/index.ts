@@ -3,15 +3,17 @@
 
 // Plays a sound when someone else starts a Jitsi meeting.
 //
-// Direct and group messages: a ringtone repeated every RING_EVERY_MS until the user clicks
-// "Join Meeting" or the ring duration passes (JitsiRingTimeout, ring_timeout in the config,
+// Direct and group messages: a ringtone repeated every RING_EVERY_MS until the user opens the
+// meeting link in any way (click, middle click, right click to open or copy it) or the ring duration passes (JitsiRingTimeout, ring_timeout in the config,
 // DEFAULT_RING_TIMEOUT_S if missing). Opening the conversation does not stop it: the user may
 // read the chat without joining. Each user's ring is separate. Public and private channels ring
 // the same way when the server marked the post with ring_in_channel (the channel has at most
 // JitsiRingMaxChannelMembers members), otherwise they play a single short chime.
-// Silent for the user's own meetings, Do Not Disturb / Out of Office and muted channels.
+// Silent for the user's own meetings, Do Not Disturb / Out of Office, muted channels and posts
+// from accounts listed in JitsiRingSilentSenders (the server marks them with ring_silent).
 // Admins turn it on or off with the JitsiRingOnMeetingStart setting and exclude accounts
-// (e.g. video conference rooms) with JitsiRingExcludedUsers, users with
+// (e.g. video conference rooms) from hearing it with JitsiRingExcludedUsers and silence the meetings
+// of accounts (e.g. bots that post links in advance) with JitsiRingSilentSenders, users with
 // "/jitsi settings ring [true/false]"; the server combines them into ring_on_meeting_start.
 //
 // Sounds are synthesized with WebAudio, so the plugin ships no audio files.
@@ -73,6 +75,9 @@ export function decide(state: any, msg: WebSocketMessage): RingDecision | null {
     }
     if (!post || post.type !== 'custom_jitsi') {
         return null;
+    }
+    if (post.props && post.props.ring_silent) {
+        return null; // sent by an account listed in JitsiRingSilentSenders
     }
 
     if (!ringEnabled(state)) {
